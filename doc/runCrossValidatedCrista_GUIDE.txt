@@ -1,0 +1,50 @@
+1. Compiling
+
+Modify the script 'COMPILEmpiWITHcblasANDCVclistaLib' so that the options to mpicc point to the correct cblas libraries on your system.  Then run 
+[]$ ./COMPILEmpiWITHcblasANDCVclistaLib runCrossValidatedClista
+to compile the program.
+
+2. Setting options to runCrossValidatedClista
+
+The options are contained in the text files 'CVmasterParameters.txt' and 'CVslaveParameters.txt'.  The slave parameters are as follows:
+
+MatrixFileName -> string argument pointing to the file containing the 'A' matrix
+numRows -> each slave attempts to read in a matrix with this many rows
+numCols -> each slave attempts to read in a matrix with this many cols 
+           (THIS SHOULD MATCH numCols from the master parameters!)
+interceptFlag -> '1' if we want to add an extra column of ones to the A matrix 
+                 to represent the intercept. '0' otherwise
+
+REMARK: It is okay if each slave cannot find enough rows to fill their A matrix.  For example, suppose the data file contains a 100 x 100 matrix and we would like to use 3 slaves.  If we put numRows = 34, then the first and second slaves will perform computations with a 34 x 100 matrix and the last slave will use a 32 x 100 matrix comprised of the last 32 rows of matrix A.
+
+The master parameters are as follows:
+
+FileNameForX0 -> 'zeros' if we want x_initial to be the all zeros vector.  Otherwise, 
+                 string pointing to a file containing an appropriate x_initial vector.
+FileNameForB -> string argument pointing to the file containing the 'b' vector
+OutputFile -> output of the program is written to this file
+numCols -> right dimension of the matrix 'A' (MUST MATCH SLAVE'S numCols!)
+numLambdas -> How many lambdas to run cross validation on.
+lambdaStart -> largest value of lambda.  Enter a negative value to force automatic 
+               calculation of the largest lambda.
+lambdaFinish -> smallest value of lambda.
+numFolds -> how many folds to include in the cross validation.  If negative,
+            the program will run (- numRows / numFolds ) - fold cross validation.
+            e.g. -1 will run leave one out cross validation.
+StepSizeDecretion -> How much to decrease the stepsize after a failed backtracking iteration.
+                     0.9 is standard.
+InitialStep -> Size of initial gradient step.
+RegressionType -> 'l' for linear regression. 'o' for logistic regression.
+FistaAcceleration -> '1' to use FISTA style search point.  '0' to use basic ISTA search point.
+MaximumIterations -> maximum number of iterations spent optimizing at a particular lambda.
+MinimumFuncDelta -> optimization stops if percent change in objective is less than this value.
+
+3. Running in MPI
+
+To submit the code to the SunGridEngine cluster scheduler one needs to use a wrapper script similar to 'RUNmpiPROGRAM'.  With this wrapper, submission looks like:
+[]$qsub RUNmpiPROGRAM 5 runCrossValidatedClista CVmasterParameters.txt CVslaveParameters.txt
+Remember that the number of slaves is the number of processes minus one.  So the above call would run the code with 4 slaves.
+
+4. Output
+
+The code will print a table of lambdas and the corresponding meanTestError in the file defined by OutputFile.

@@ -1,0 +1,4 @@
+MatrixFileName : Data/LOG_100_100_SIG_6_INT_0_NOISE_0_0_A.dat
+numRows : 25
+numCols : 100
+interceptFlag : 1

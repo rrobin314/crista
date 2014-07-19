@@ -1,0 +1,13 @@
+FileNameForX0 : zeros
+FileNameForB : Data/LOG_100_100_SIG_6_INT_0_NOISE_0_0_b.dat
+OutputFile : ISTAmpiOut.txt
+numCols : 100
+numLambdas : 10 (lambda is the weight we put on the regularization function)
+lambdaStart : -2 (a negative value here forces automatic calculation)
+lambdaFinish : 1.0
+StepSizeDecretion : 0.9
+InitialStep : 1.0
+RegressionType : o
+FistaAcceleration : 1
+MaximumIterations : 100
+MinimumFuncDelta : 0.0001

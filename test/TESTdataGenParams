@@ -1,0 +1,10 @@
+FileNameForSoln : data/1000x1000_Test_soln.dat
+ModelType : l // 'l' for linear, 'o' for logistic
+numRows : 1000
+numTotalCols : 1000
+numSigCols : 5
+sigColsOffset : 0
+intercept : 10.0
+noiseLevel : 0.0
+FileNameForB : data/1000x1000_Test_b.dat
+FileNameForA : data/1000x1000_Test_A.dat

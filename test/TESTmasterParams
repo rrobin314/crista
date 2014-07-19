@@ -1,0 +1,13 @@
+FileNameForX0 : zeros
+FileNameForB : data/1000x1000_Test_b.dat
+OutputFile : results/makeTestResults.txt
+numCols : 1000
+numLambdas : 5 (lambda is the weight we put on the regularization function)
+lambdaStart : -2 (a negative value here forces automatic calculation)
+lambdaFinish : 0.1
+StepSizeDecretion : 0.9
+InitialStep : 1.0
+RegressionType : l
+FistaAcceleration : 1
+MaximumIterations : 100
+MinimumFuncDelta : 0.001

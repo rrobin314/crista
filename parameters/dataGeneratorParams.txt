@@ -1,0 +1,10 @@
+FileNameForSoln : LOG_100_100_SIG_6_INT_0_NOISE_0_0_soln.dat
+ModelType : o // 'l' for linear, 'o' for logistic
+numRows : 100
+numTotalCols : 100
+numSigCols : 6
+sigColsOffset : 0
+intercept : 0.0
+noiseLevel : 0.0
+FileNameForB : LOG_100_100_SIG_6_INT_0_NOISE_0_0_b.dat
+FileNameForA : LOG_100_100_SIG_6_INT_0_NOISE_0_0_A.dat

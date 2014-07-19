@@ -1,0 +1,31 @@
+This program generates toy data for the runClistaSolve and runCrossValidatedClista programs.  We construct the 'A' matrix whose entries are iid N(0,1).  Then we construct the solution vector with 'numSigCols' nonzero entries that are distributed iid N(0,1) in the linear case and iid 3*N(0,1) in the logistic case.  Then we calculate 
+
+A*soln + intercept + noiseLevel*epsilon 
+
+where epsilons are iid N(0,1).  In the linear case, this is our 'b' vector.  In the logistic case, we interpret this as logodds and generate the 'b' vector based on these odds.
+
+
+
+1. Compiling
+
+The data_generator program requires cblas, so compiling will require linking the appropriate libraries.  Here is an emample:
+
+[]$ gcc -Wall -o data_generator -I /usr/local/atlas-3.9.23/include/ -L /usr/local/atlas-3.9.23/lib/ -latlas -lcblas data_generator.c
+
+2. Setting Parameters
+
+The parameters are contained in the file dataGenParameters.txt.
+
+FileNameForSoln -> this is where the solution vector will be written.  
+ModelType -> 'l' for linear regression, 'o' for logistic regression.
+numRows -> left dimension of 'A' matrix to be created
+numTotalCols -> right dimension of 'A' matrix to be created
+numSigCols -> Since we are constructing a sparse model, most of the features
+              are not significant.  This is the number of significant features.
+sigColsOffset -> If there are 5 significant features and this is 0, then the 
+	         significant features are 1-5.  If this parameter were 13, then 
+		 the significant features would be 13-17.
+intercept -> float determining intercept (see model description above)
+noiseLevel -> float determining how much noise to include (see model description)
+FileNameForB -> this is where the observation vector is written
+FileNameForA -> this is where the data matrix A is written

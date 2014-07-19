@@ -1,0 +1,4 @@
+MatrixFileName : data/1000x1000_Test_A.dat
+numRows : 1000
+numCols : 1000
+interceptFlag : 1
