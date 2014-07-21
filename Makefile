@@ -31,7 +31,7 @@ CVcristaLib.o:
 	$(MPICC) $(CFLAGS) -c src/CVcristaLib.c -o src/CVcristaLib.o
 
 clean:
-	rm -vf src/*.o dataGenerator runCrista runCrossValidatedCrista
+	rm -vf src/*.o 1000x1000_Test*.dat makeTestResults.txt dataGenerator runCrista runCrossValidatedCrista
 
 test:
 	./dataGenerator test/TESTdataGenParams
