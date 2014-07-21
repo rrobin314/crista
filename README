@@ -1,0 +1,25 @@
+README file for CRISTA (Cluster Ready ISTA) package
+Author: Richard Z Robinson
+Email: rzr@uw.edu
+Date: July 21, 2014
+
+OVERVIEW:
+This package contains an implementation of the ISTA and FISTA proximal gradient algorithms for solving L1-penalized linear and logistic regression.  This implementation uses MPI to distribute the workload among several nodes of a cluster.  It also makes use of CBLAS for efficient linear algebra operations.  For background on the ISTA and FISTA algorithms, please see the paper "A Fast Iterative Shrinkage-Thresholding Algorithm for Linear Inverse Problems" by Beck and Teboulle.
+
+INSTALLATION:
+Once the source code has been copied to your machine (using 'git clone' or by donwloading it as a .zip), the Makefile will need to be modified to work with your system.  In particular, the variables linking the CBLAS libraries will need to be changed.  Once this is done, simply run:
+
+$ make clean  
+
+(this cleans up some old files...).  Then run:
+
+$ make
+
+to build the executables.  Finally, to make sure everything is working run:
+
+$ make test
+
+to generate a 1000 x 1000 linear inverse problem and run LASSO on it.  If things are working properly, the vector contained in results/makeTestResults.txt should approximate the vector found in data/1000x1000_Test_soln.dat
+
+USING THE SOFTWARE:
+Further instructions on using dataGenerator, runCrista, and runCrossValidatedCrista can be found in doc/ folder.

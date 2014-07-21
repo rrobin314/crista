@@ -143,7 +143,7 @@ void ISTAsolve_lite(ISTAinstance_mpi* instance, int MAX_ITER, float MIN_FUNCDIFF
 
   //OUTPUT RESULTS
   finalObjFunc = ISTAloss_func_mpi(instance->xcurrent, instance) + instance->lambda * cblas_sasum(instance->rdA, instance->xcurrent, 1);
-  fprintf(stdout, "\nAt L1-norm weight %f - %d iterations, objective changed from %f to %f\n",
+  fprintf(stdout, "At L1-norm weight %f - %d iterations, objective changed from %f to %f\n",
 	  instance->lambda, iter, initObjFunc, finalObjFunc);
 
 }

@@ -139,7 +139,7 @@ int main(int argc, char **argv)
   }
   fclose(matFile);
 
-  fprintf(stdout,"\nCreated data files %s, %s, %s\n", solnfilename, bfilename, Afilename);
+  fprintf(stdout,"\nCreated data files %s, %s, %s\n\n", solnfilename, bfilename, Afilename);
 
   free(A); free(soln); free(b); free(calcVector);
   return 0;

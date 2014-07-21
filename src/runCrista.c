@@ -194,9 +194,9 @@ static void master(int nslaves, char* parameterFile)
   computationStartTime = time(NULL);
 
   //RUN ISTA
+  fprintf(stdout, "\n");
   for(j=0; j < numLambdas; j++) {
     instance->lambda = lambdas[j];
-
     ISTAsolve_lite(instance, MAX_ITER, MIN_FUNCDIFF);
     fprintf(stdout, "\n");
   }
