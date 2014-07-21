@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
+#include<string.h>
 #include<cblas.h>
 #include"mpi.h"
 #include"cristaLib.h"
@@ -64,10 +65,13 @@ ISTAinstance_mpi* ISTAinstance_mpi_new(int* slave_ldAs, int ldA, int rdA, float*
   for(i=1; i<=nslaves; i++)
     instance->slave_ldAs_displacements[i] = instance->slave_ldAs_displacements[i-1] + instance->slave_ldAs[i-1];
 
-  fprintf(stdout,"Created ISTA instance with parameters:\n nslaves: %d ldA: %d rdA: %d \n lambda: %f gamma: %f accel: %d regType: %c step: %f  \n b[0]: %f b[last]: %f \n x[0]: %f x[last]: %f \n", 
-	  nslaves, instance->ldA, rdA, lambda, gamma, acceleration,
-	  regressionType, step, b[0], b[instance->ldA-1], xvalue[0], xvalue[rdA-1]);
+  //OUTPUT PARAMETERS
+  char regressionString[10] = "logistic";
+  if(regressionType == 'l')
+    strcpy(regressionString, "linear");
 
+  fprintf(stdout,"\nCreated CRISTA instance with parameters:\n nslaves: %d ldA: %d rdA: %d \n acceleration: %d regressionType: %s \n", 
+	  nslaves, ldA, rdA, acceleration, regressionString );
   return instance;
 }
 
@@ -92,13 +96,13 @@ void ISTAinstance_mpi_free(ISTAinstance_mpi* instance)
 
 void ISTAsolve_lite(ISTAinstance_mpi* instance, int MAX_ITER, float MIN_FUNCDIFF )
 {
-  // This version of ISTAsolve does not allocate any memory
-
   //Initialize stop values:
   int iter=0;
   float funcdiff=1;
+  float initObjFunc, finalObjFunc;
 
-  fprintf(stdout, "intial objective function value for lambda %f: %f\n", instance->lambda, ISTAloss_func_mpi(instance->xcurrent, instance) + instance->lambda * cblas_sasum(instance->rdA, instance->xcurrent, 1) );
+  //Record initial objective function value
+  initObjFunc = ISTAloss_func_mpi(instance->xcurrent, instance) + instance->lambda * cblas_sasum(instance->rdA, instance->xcurrent, 1);
 
   while(iter < MAX_ITER && funcdiff > MIN_FUNCDIFF)
     {
@@ -144,8 +148,10 @@ void ISTAsolve_lite(ISTAinstance_mpi* instance, int MAX_ITER, float MIN_FUNCDIFF
       iter++;
     }
 
-  fprintf(stdout, "iter: %d funcdiff: %f\n", iter, funcdiff);
-  fprintf(stdout, "final objective function value for lambda %f: %f\n", instance->lambda, ISTAloss_func_mpi(instance->xcurrent, instance) + instance->lambda * cblas_sasum(instance->rdA, instance->xcurrent, 1) );
+  //OUTPUT RESULTS
+  finalObjFunc = ISTAloss_func_mpi(instance->xcurrent, instance) + instance->lambda * cblas_sasum(instance->rdA, instance->xcurrent, 1);
+  fprintf(stdout, "\nAt L1-norm weight %f - %d iterations, objective changed from %f to %f\n",
+	  instance->lambda, iter, initObjFunc, finalObjFunc);
 
 }
 
@@ -454,16 +460,6 @@ extern int get_dat_matrix(float* A, int ldA, int rdA, int myrank,
   }	 
 
   fclose(matrixfile);
-
-  //int i;
-
-  //  fprintf(stdout,"Slave %d getting %d by %d matrix\n", myrank, ldA, rdA);
-
-  //for( i=0; i<ldA*rdA; i++)
-  //{
-  //  //A[i] = myrank * (i+1) * 0.1;
-  //  A[i] =  (float)rand()/(1.0 * (float)RAND_MAX);
-  //}
 
   return numValidRows;
 }

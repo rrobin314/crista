@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
   t2 = MPI_Wtime();
   if(myrank==0)
-    fprintf(stdout, "Elapsed time is %f \n", t2-t1);
+    fprintf(stdout, "CRISTA timing: total time elapsed - %f seconds\n\n", t2-t1);
 
   MPI_Finalize();
   return 0;
@@ -81,7 +81,7 @@ static void master(int nslaves, char* parameterFile)
   total_ldA = 0;
   for(i=0; i<=nslaves; i++)
     total_ldA += slave_ldAs[i];
-  fprintf(stdout, "TOTAL LDA IS %d\n", total_ldA);
+  //fprintf(stdout, "TOTAL LDA IS %d\n", total_ldA);
 
 
   //ALLOCATE MEMORY
@@ -107,6 +107,7 @@ static void master(int nslaves, char* parameterFile)
     if(slave_ldAs[i] == -1) error=0;
   MPI_Bcast(&error, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if(error==0) {
+    fprintf(stderr, "Fatal error during setup, closing program...\n");
     free(result);
     free(xvalue);
     free(b);
@@ -199,11 +200,11 @@ static void master(int nslaves, char* parameterFile)
 
   //STOP TIME
   endTime = time(NULL);
-  fprintf(stdout,"Setup took %f seconds and computation took %f seconds\n",
+  fprintf(stdout,"CRISTA timing: setup - %f seconds, computation - %f seconds\n",
 	  difftime(computationStartTime, startTime), difftime(endTime, computationStartTime));
 
   //CLOSE THE SLAVE PROCESSES AND FREE MEMORY
-  fprintf(stdout, "Closing the program\n");
+  fprintf(stdout, "Finalizing MPI...\n");
   for(rank=1; rank <= nslaves; rank++)
     {
       MPI_Send(0, 0, MPI_INT, rank, TAG_DIE, MPI_COMM_WORLD);
@@ -254,7 +255,7 @@ static void slave(int myrank, char* parameterFile)
     free(resultVector);
     return;
   }
-  fprintf(stdout,"Slave %d found %d valid rows: A[0] is %f \n", myrank, my_ldA, A[0] );
+  fprintf(stdout,"Slave %d found %d valid rows\n", myrank, my_ldA );
   
 
   //CENTER FEATURES
