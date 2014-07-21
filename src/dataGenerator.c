@@ -31,11 +31,14 @@ int main(int argc, char **argv)
   //GET VALUES FROM PARAMETER FILE
   getParams(argv[1], &numRows, &numSigCols, &numTotalCols, &sigColsOffset,
 	    &intercept, &noiseLevel, solnfilename, bfilename, Afilename, &modelType);
-  fprintf(stdout,"%s, %s, %s\n", solnfilename, bfilename, Afilename);
 
 
   //GENERATE SIGNIFICANT PART OF A MATRIX
   float* A = (float*)malloc(numRows*numSigCols*sizeof(float));
+  if(!A) {
+    fprintf(stderr,"Error 1.1 - malloc failed\n");
+    exit(EXIT_FAILURE);
+  }
   for(i=0; i<numRows; i++) {
     for(j=0; j<numSigCols; j++) {
       A[i*numSigCols + j] = generateStandardNormal();
@@ -44,6 +47,10 @@ int main(int argc, char **argv)
 
   //GENERATE NONZERO PART OF SOLUTION
   float* soln = (float*)malloc(numSigCols*sizeof(float));
+  if(!soln) {
+    fprintf(stderr,"Error 1.2 - malloc failed\n");
+    exit(EXIT_FAILURE);
+  }
   float multiplier;
   if(modelType == 'o')
     multiplier = 3.0;
@@ -54,6 +61,10 @@ int main(int argc, char **argv)
 
   //GENERATE OBSERVATION VECTOR
   float* b = (float*)malloc(numRows*sizeof(float));
+  if(!b) {
+    fprintf(stderr,"Error 1.3 - malloc failed\n");
+    exit(EXIT_FAILURE);
+  }
   cblas_sgemv(CblasRowMajor, CblasNoTrans, numRows, numSigCols, 1.0, A, numSigCols,
 	      soln, 1, 0.0, b, 1);
   for(i=0; i<numRows; i++)
@@ -67,6 +78,10 @@ int main(int argc, char **argv)
   //CALCULATE OBJECTIVE FUNCTION VALUE
   objFunc = cblas_sasum(numSigCols, soln, 1);
   float* calcVector = (float*)malloc(numRows*sizeof(float));
+  if(!calcVector) {
+    fprintf(stderr,"Error 1.4 - malloc failed\n");
+    exit(EXIT_FAILURE);
+  }
   for(i=0; i<numRows; i++) //set calcVector to intercept value
     calcVector[i] = intercept;
   cblas_sgemv(CblasRowMajor, CblasNoTrans, numRows, numSigCols, 1.0, A, numSigCols,
@@ -82,8 +97,10 @@ int main(int argc, char **argv)
 
   //WRITE SOLN VECTOR TO FILE
   FILE* solnFile = fopen(solnfilename, "w");
-  if(solnFile==NULL)
-    fprintf(stdout,"Error opening solnFile\n");
+  if(solnFile==NULL) {
+    fprintf(stderr,"Error 2.1 - File open failed\n");
+    exit(EXIT_FAILURE);
+  }
   fprintf(solnFile, "Objective Func Value for this vector: %f \n", objFunc);
   fprintf(solnFile, "\nIntercept: %f \n\nSolutionVector:\n", intercept);
   for(j=0; j<numTotalCols; j++) {
@@ -96,8 +113,10 @@ int main(int argc, char **argv)
 
   //WRITE OBSERVATION VECTOR TO FILE
   FILE* vecFile = fopen(bfilename, "w");
-  if(vecFile==NULL)
-    fprintf(stdout,"Error opening vecFile\n");
+  if(vecFile==NULL) {
+    fprintf(stderr,"Error 2.2 - File open failed\n");
+    exit(EXIT_FAILURE);
+  }
   for(i=0; i<numRows; i++) {
     fprintf(vecFile, "%f \n", b[i]);
   }
@@ -105,8 +124,10 @@ int main(int argc, char **argv)
 
   //WRITE MATRIX TO FILE
   FILE* matFile = fopen(Afilename, "w");
-  if(matFile==NULL)
-    fprintf(stdout,"Error opening matFile\n");
+  if(matFile==NULL) {
+    fprintf(stderr,"Error 2.3 - File open failed\n");
+    exit(EXIT_FAILURE);
+  }
   for(i=0; i<numRows; i++) {
     for(j=0; j<numTotalCols; j++) {
       if(j<sigColsOffset || j >= sigColsOffset+numSigCols)
@@ -118,6 +139,8 @@ int main(int argc, char **argv)
   }
   fclose(matFile);
 
+  fprintf(stdout,"\nCreated data files %s, %s, %s\n", solnfilename, bfilename, Afilename);
+
   free(A); free(soln); free(b); free(calcVector);
   return 0;
 }
@@ -127,8 +150,10 @@ static void getParams(char* parameterFile, int* numRows, int* numSigCols, int* n
 		      char* solnfilename, char* bfilename, char* Afilename, char* modelType) {
   FILE *paramFile;
   paramFile = fopen(parameterFile, "r");
-  if(paramFile == NULL)
-    fprintf(stderr, "ParamFile Open Failed!\n");
+  if(paramFile == NULL) {
+    fprintf(stderr, "Error 0.1 - ParamFile Open Failed!\n");
+    exit(EXIT_FAILURE);
+  }
 
   //Read parameters:
   fscanf(paramFile, "FileNameForSoln : %127s", solnfilename);

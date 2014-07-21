@@ -76,6 +76,10 @@ static void master(int nslaves, char* parameterFile)
 
   //STORE EACH SLAVE'S INDIVIDUAL LDA AND CALCULATE TOTAL_LDA
   slave_ldAs = (int*)malloc((nslaves+1)*sizeof(int));
+  if(!slave_ldAs) {
+    fprintf(stderr, "Error 1 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
   int my_ldA = 0;
   MPI_Gather(&my_ldA, 1, MPI_INT, slave_ldAs, 1, MPI_INT, 0, MPI_COMM_WORLD);
   total_ldA = 0;
@@ -89,9 +93,10 @@ static void master(int nslaves, char* parameterFile)
   result = malloc((total_ldA+rdA)*sizeof(float));
   b      = malloc((total_ldA)*sizeof(float));
   lambdas = malloc(numLambdas*sizeof(float));
-  if(xvalue==NULL || result==NULL || b==NULL || lambdas==NULL)
-    fprintf(stdout,"Unable to allocate memory!");
-  
+  if(xvalue==NULL || result==NULL || b==NULL || lambdas==NULL) {
+    fprintf(stderr,"Error 2 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 2);
+  }
 
   //ASSIGN VALUES TO XVALUE AND B
   error=1;
@@ -136,6 +141,10 @@ static void master(int nslaves, char* parameterFile)
   
   //CENTER FEATURES
   float* shifts = calloc(rdA, sizeof(float));
+  if(!shifts) {
+    fprintf(stderr, "Error 3 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 3);
+  }
   MPI_Reduce(shifts, instance->meanShifts, rdA, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
   cblas_sscal(rdA, 1.0 / total_ldA, instance->meanShifts, 1); 
   
@@ -143,6 +152,10 @@ static void master(int nslaves, char* parameterFile)
 
   //SCALE FEATURES
   float* norms = calloc(rdA, sizeof(float));
+  if(!norms) {
+    fprintf(stderr, "Error 4 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 4);
+  }
   MPI_Reduce(norms, instance->scalingFactors, rdA, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
   for(j=0; j<rdA; j++)
     instance->scalingFactors[j] = pow(instance->scalingFactors[j], 0.5);
@@ -234,15 +247,18 @@ static void slave(int myrank, char* parameterFile)
 
   //ALLOCATE A, TEMPHOLDER, RESULTVECTOR and XVALUE
   A = malloc(target_ldA*(rdA+1)*sizeof(float));
-  if(A==NULL)
-    fprintf(stdout,"Unable to allocate memory!");
+  if(!A) {
+    fprintf(stderr, "Error 5 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 5);
+  }
 
   xvalue = malloc( (target_ldA+rdA)*sizeof(float) );
   tempHolder = malloc( (target_ldA+rdA)*sizeof(float) ); //place holder for intermediate calculations
   resultVector = malloc( (target_ldA+rdA)*sizeof(float) );
-  if(xvalue==NULL || tempHolder==NULL || resultVector==NULL)
-    fprintf(stdout,"Unable to allocate memory!");
-
+  if(xvalue==NULL || tempHolder==NULL || resultVector==NULL) {
+    fprintf(stderr, "Error 6 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 6);
+  }
 
   //FILL A WITH DESIRED VALUES AND SEND NUMBER OF FILLED ROWS TO MASTER
   my_ldA=get_dat_matrix(A, target_ldA, rdA, myrank, matrixfilename, interceptFlag);
@@ -261,6 +277,10 @@ static void slave(int myrank, char* parameterFile)
   //CENTER FEATURES
   float* shifts = malloc((rdA+1)*sizeof(float));
   float* ones = malloc(my_ldA*sizeof(float));
+  if(shifts==NULL || ones==NULL ) {
+    fprintf(stderr, "Error 7 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 7);
+  }
   for(i=0; i<my_ldA; i++)
     ones[i] = 1.0;
   cblas_sgemv(CblasRowMajor, CblasTrans, my_ldA, rdA+1, 1.0, A, rdA+1, 
@@ -274,6 +294,10 @@ static void slave(int myrank, char* parameterFile)
 
   //SCALE FEATURES
   float* norms = calloc(rdA, sizeof(float));
+  if(!norms) {
+    fprintf(stderr, "Error 8 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 8);
+  }
   for(i=0; i<my_ldA; i++) {
     for(j=0; j<rdA; j++) {
 	norms[j] += pow( A[i*(rdA+1) + j], 2);
@@ -366,8 +390,10 @@ static void getMasterParams(char* parameterFile, char* xfilename, char* bfilenam
 			    int* MAX_ITER, float* MIN_FUNCDIFF) {
   FILE *paramFile;
   paramFile = fopen(parameterFile, "r");
-  if(paramFile == NULL)
-    fprintf(stderr, "ParamFile Open Failed!\n");
+  if(paramFile == NULL) {
+    fprintf(stderr, "Error 10 - paramFile open failed\n");
+    MPI_Abort(MPI_COMM_WORLD, 10);
+  }
 
   //Read parameters:
   fscanf(paramFile, "FileNameForX0 : %63s", xfilename);
@@ -394,8 +420,10 @@ static void getSlaveParams(char* parameterFile, int* ldA, int* rdA, int* interce
 
   FILE *paramFile;
   paramFile = fopen(parameterFile, "r");
-  if(paramFile == NULL)
-    fprintf(stderr, "ParamFile Open Failed!\n");
+  if(paramFile == NULL) {
+    fprintf(stderr, "Error 11 - paramFile open failed\n");
+    MPI_Abort(MPI_COMM_WORLD, 11);
+  }
 
   fscanf(paramFile, "MatrixFileName : %63s", matrixfilename);
   fscanf(paramFile, " numRows : %d", ldA);
