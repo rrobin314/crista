@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
   t2 = MPI_Wtime();
   if(myrank==0)
-    fprintf(stdout, "Elapsed time is %f \n", t2-t1);
+    fprintf(stdout, "CV CRISTA timing: total time elapsed - %f seconds\n", t2-t1);
 
   MPI_Finalize();
   return 0;
@@ -77,6 +77,10 @@ static void master(int nslaves, char* parameterFile)
 
   //STORE EACH SLAVE'S INDIVIDUAL LDA AND CALCULATE TOTAL_LDA
   slave_ldAs = (int*)malloc((nslaves+1)*sizeof(int));
+  if(!slave_ldAs) {
+    fprintf(stderr, "Error 1 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
   int my_ldA = 0;
   MPI_Gather(&my_ldA, 1, MPI_INT, slave_ldAs, 1, MPI_INT, 0, MPI_COMM_WORLD);
   total_ldA = 0;
@@ -87,12 +91,15 @@ static void master(int nslaves, char* parameterFile)
 
   //ALLOCATE MEMORY
   xvalue = calloc(rdA+1,sizeof(float));
+  xinit = malloc((rdA+1)*sizeof(float));
   result = malloc((total_ldA+rdA)*sizeof(float));
   b      = malloc((total_ldA)*sizeof(float));
   lambdas = malloc(numLambdas*sizeof(float));
   meanTotalErrors = calloc(numLambdas, sizeof(float));
-  if(xvalue==NULL || result==NULL || b==NULL || lambdas==NULL || meanTotalErrors==NULL)
-    fprintf(stdout,"1.1-Unable to allocate memory!");
+  if(xvalue==NULL || result==NULL || b==NULL || lambdas==NULL || meanTotalErrors==NULL || xinit==NULL) {
+    fprintf(stderr,"Error 2 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 2);
+  }
   
 
   //ASSIGN VALUES TO XVALUE AND B
@@ -104,10 +111,7 @@ static void master(int nslaves, char* parameterFile)
     error *= getVector(xvalue, rdA, xfilename);
   error *= getVector(b, total_ldA, bfilename);
 
-  //CREATE 'xinit' VECTOR TO HOLD THE ORIGINAL 'xvalue' VECTOR
-  xinit = malloc((rdA+1)*sizeof(float));
-  if(xinit==NULL)
-    fprintf(stdout,"1.2-Unable to allocate memory!");
+  //USE 'xinit' VECTOR TO HOLD ONTO THE ORIGINAL 'xvalue' VECTOR
   cblas_scopy(rdA + 1, xvalue, 1, xinit, 1);
 
   //CHECK FOR FILEOPEN ERRORS; IF ANY PRESENT END PROGRAM
@@ -143,6 +147,10 @@ static void master(int nslaves, char* parameterFile)
   
   //CENTER FEATURES
   float* shifts = calloc(rdA, sizeof(float));
+  if(!shifts) {
+    fprintf(stderr, "Error 3 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 3);
+  }
   MPI_Reduce(shifts, instance->meanShifts, rdA, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
   cblas_sscal(rdA, 1.0 / total_ldA, instance->meanShifts, 1); 
   
@@ -150,6 +158,10 @@ static void master(int nslaves, char* parameterFile)
 
   //SCALE FEATURES
   float* norms = calloc(rdA, sizeof(float));
+  if(!norms) {
+    fprintf(stderr, "Error 4 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 4);
+  }
   MPI_Reduce(norms, instance->scalingFactors, rdA, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
   for(j=0; j<rdA; j++)
     instance->scalingFactors[j] = pow(instance->scalingFactors[j], 0.5);
@@ -189,14 +201,15 @@ static void master(int nslaves, char* parameterFile)
   
   //TIME UPDATE
   computationStartTime = time(NULL);
+  fprintf(stdout, "\n");
 
   //LOOP THROUGH EACH FOLD
-  fprintf(stdout, "Begin ISTA calc...\n");
   for(i=0; i < instance->numFolds; i++) {
     instance->currentFold = i;
 
-    //RESET XVALUE TO BE XINIT AND STEPSIZE TO INTIAL VALUE
+    //RESET XVALUE AND SEARCHPOINT TO BE XINIT AND STEPSIZE TO INTIAL VALUE
     cblas_scopy(rdA + 1, xinit, 1, instance->xcurrent, 1);
+    cblas_scopy(rdA + 1, xinit, 1, instance->searchPoint, 1);
     *(instance->stepsize) = step;
 
     //LOOP THROUGH EACH LAMBDA
@@ -212,6 +225,7 @@ static void master(int nslaves, char* parameterFile)
       //ADD TEST ERROR TO 'meanTotalErrors' VECTOR
       meanTotalErrors[j] += ISTAloss_func_mpiCV(instance->xcurrent, instance, 1) / (float)instance->ldA;
     }
+    fprintf(stdout, "\n");
   }
 
   //UNDO RESCALING
@@ -226,11 +240,11 @@ static void master(int nslaves, char* parameterFile)
 
   //STOP TIME
   endTime = time(NULL);
-  fprintf(stdout,"Setup took %f seconds and computation took %f seconds\n",
+  fprintf(stdout,"CV CRISTA timing: setup - %f seconds, computation - %f seconds\n",
 	  difftime(computationStartTime, startTime), difftime(endTime, computationStartTime));
 
   //CLOSE THE SLAVE PROCESSES AND FREE MEMORY
-  fprintf(stdout, "Closing the program\n");
+  fprintf(stdout, "Finalizing MPI...\n");
   for(rank=1; rank <= nslaves; rank++)
     {
       MPI_Send(0, 0, MPI_INT, rank, TAG_DIE, MPI_COMM_WORLD);
@@ -262,14 +276,18 @@ static void slave(int myrank, char* parameterFile)
 
   //ALLOCATE A, TEMPHOLDER, RESULTVECTOR and XVALUE
   A = malloc(target_ldA*(rdA+1)*sizeof(float));
-  if(A==NULL)
-    fprintf(stdout,"3.1-Unable to allocate memory!");
+  if(!A) {
+    fprintf(stderr, "Error 5 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 5);
+  }
 
   xvalue = malloc( (target_ldA+rdA)*sizeof(float) );
   tempHolder = malloc( (target_ldA+rdA)*sizeof(float) ); //place holder for intermediate calculations
   resultVector = malloc( (target_ldA+rdA)*sizeof(float) );
-  if(xvalue==NULL || tempHolder==NULL || resultVector==NULL)
-    fprintf(stdout,"3.2-Unable to allocate memory!");
+  if(xvalue==NULL || tempHolder==NULL || resultVector==NULL) {
+    fprintf(stderr, "Error 6 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 6);
+  }
 
 
   //FILL A WITH DESIRED VALUES AND SEND NUMBER OF FILLED ROWS TO MASTER
@@ -283,12 +301,16 @@ static void slave(int myrank, char* parameterFile)
     free(resultVector);
     return;
   }
-  fprintf(stdout,"Slave %d found %d valid rows: A[0] is %f \n", myrank, my_ldA, A[0] );
+  fprintf(stdout,"Slave %d found %d valid rows\n", myrank, my_ldA );
   
 
   //CENTER FEATURES
   float* shifts = malloc((rdA+1)*sizeof(float));
   float* ones = malloc(my_ldA*sizeof(float));
+  if(shifts==NULL || ones==NULL ) {
+    fprintf(stderr, "Error 7 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 7);
+  }
   for(i=0; i<my_ldA; i++)
     ones[i] = 1.0;
   cblas_sgemv(CblasRowMajor, CblasTrans, my_ldA, rdA+1, 1.0, A, rdA+1, 
@@ -302,6 +324,10 @@ static void slave(int myrank, char* parameterFile)
 
   //SCALE FEATURES
   float* norms = calloc(rdA, sizeof(float));
+  if(!norms) {
+    fprintf(stderr, "Error 8 - Malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 8);
+  }
   for(i=0; i<my_ldA; i++) {
     for(j=0; j<rdA; j++) {
 	norms[j] += pow( A[i*(rdA+1) + j], 2);
@@ -394,8 +420,10 @@ static void getMasterParams(char* parameterFile, char* xfilename, char* bfilenam
 			    int* MAX_ITER, float* MIN_FUNCDIFF) {
   FILE *paramFile;
   paramFile = fopen(parameterFile, "r");
-  if(paramFile == NULL)
-    fprintf(stderr, "ParamFile Open Failed!\n");
+  if(paramFile == NULL) {
+    fprintf(stderr, "Error 10 - paramFile open failed\n");
+    MPI_Abort(MPI_COMM_WORLD, 10);
+  }
 
   //Read parameters:
   fscanf(paramFile, "FileNameForX0 : %63s", xfilename);
@@ -423,8 +451,10 @@ static void getSlaveParams(char* parameterFile, int* ldA, int* rdA, int* interce
 
   FILE *paramFile;
   paramFile = fopen(parameterFile, "r");
-  if(paramFile == NULL)
-    fprintf(stderr, "ParamFile Open Failed!\n");
+  if(paramFile == NULL) {
+    fprintf(stderr, "Error 11 - paramFile open failed\n");
+    MPI_Abort(MPI_COMM_WORLD, 11);
+  }
 
   fscanf(paramFile, "MatrixFileName : %63s", matrixfilename);
   fscanf(paramFile, " numRows : %d", ldA);

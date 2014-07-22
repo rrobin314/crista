@@ -13,8 +13,10 @@ ISTAinstance_mpi* ISTAinstance_mpi_new(int* slave_ldAs, int ldA, int rdA, float*
 {
   // This method initializes an ISTAinstance object
   ISTAinstance_mpi* instance = malloc(sizeof(ISTAinstance_mpi));
-  if ( instance==NULL )
-    fprintf(stdout, "Unable to allocate memory\n");
+  if ( instance==NULL ) {
+    fprintf(stderr, "Error 20 - Malloc failed\n");
+    MPI_Abort(comm, 20);
+  }
 
   instance->slave_ldAs = slave_ldAs;
   instance->ldA = ldA;

@@ -12,8 +12,10 @@ ISTAinstance_mpi* ISTAinstance_mpi_new(int* slave_ldAs, int ldA, int rdA, int nu
 {
   // This method initializes an ISTAinstance object
   ISTAinstance_mpi* instance = malloc(sizeof(ISTAinstance_mpi));
-  if ( instance==NULL )
-    fprintf(stdout, "2.1-Unable to allocate memory\n");
+  if ( instance==NULL ) {
+    fprintf(stderr, "Error 20 - Malloc failed\n");
+    MPI_Abort(comm, 20);
+  }
 
   instance->slave_ldAs = slave_ldAs;
   instance->ldA = ldA;
@@ -43,40 +45,34 @@ ISTAinstance_mpi* ISTAinstance_mpi_new(int* slave_ldAs, int ldA, int rdA, int nu
   *(instance->stepsize) = step;
 
   instance->xprevious = malloc((rdA+1)*sizeof(float));
-  if ( instance->xprevious==NULL )
-    fprintf(stdout, "2.2-Unable to allocate memory\n");
-
   instance->searchPoint = malloc((rdA+1)*sizeof(float));
-  if ( instance->searchPoint==NULL )
-    fprintf(stdout, "2.3-Unable to allocate memory\n");
-  cblas_scopy(rdA+1, instance->xcurrent, 1, instance->searchPoint, 1);
-
   instance->gradvalue = malloc((rdA+1)*sizeof(float));
   instance->eta = malloc((instance->ldA + rdA)*sizeof(float));
-  if ( instance->gradvalue==NULL || instance->eta==NULL )
-    fprintf(stdout, "2.4-Unable to allocate memory\n");
-
   instance->meanShifts = calloc(rdA, sizeof(float));
   instance->scalingFactors = calloc(rdA, sizeof(float));
-  if ( instance->meanShifts==NULL || instance->scalingFactors==NULL )
-    fprintf(stdout, "2.5-Unable to allocate memory\n");
-
   instance->slave_ldAs_displacements = malloc((nslaves+1)*sizeof(int));
-  if ( instance->slave_ldAs_displacements==NULL )
-    fprintf(stdout, "2.6-Unable to allocate memory\n");
-  //FILL slave_ldAs_displacements
+  instance->folds = malloc(instance->ldA*sizeof(int));
+
+  if( instance->xprevious==NULL || instance->searchPoint==NULL || instance->gradvalue==NULL || instance->eta==NULL || instance->meanShifts==NULL || instance->scalingFactors==NULL || instance->slave_ldAs_displacements==NULL || instance->folds==NULL) {
+    fprintf(stderr, "Error 21 - Malloc failed\n");
+    MPI_Abort(comm, 21);
+  }
+
+  //FILL searchPoint and slave_ldAs_displacements
+  cblas_scopy(rdA+1, instance->xcurrent, 1, instance->searchPoint, 1);
+
   int i;
   instance->slave_ldAs_displacements[0]=0;
   for(i=1; i<=nslaves; i++)
     instance->slave_ldAs_displacements[i] = instance->slave_ldAs_displacements[i-1] + instance->slave_ldAs[i-1];
 
-  instance->folds = malloc(instance->ldA*sizeof(int));
-  if ( instance->folds==NULL )
-    fprintf(stdout, "2.7-Unable to allocate memory\n");
+  //OUTPUT PARAMETERS
+  char regressionString[10] = "logistic";
+  if(regressionType == 'l')
+    strcpy(regressionString, "linear");
 
-  fprintf(stdout,"Created CV ISTA instance with parameters:\n nslaves: %d ldA: %d rdA: %d numFolds: %d \n lambda: %f gamma: %f accel: %d regType: %c step: %f  \n b[0]: %f b[last]: %f \n x[0]: %f x[last]: %f \n", 
-	  nslaves, instance->ldA, rdA, instance->numFolds, lambda, gamma, acceleration,
-	  regressionType, step, b[0], b[instance->ldA-1], xvalue[0], xvalue[rdA-1]);
+  fprintf(stdout,"Created CV CRISTA instance with parameters:\n nslaves: %d ldA: %d rdA: %d numFolds: %d \n acceleration: %d regressionType: %s \n", 
+	  nslaves, ldA, rdA, instance->numFolds, acceleration, regressionString );
 
   return instance;
 }
@@ -319,6 +315,10 @@ extern void calcFolds(ISTAinstance_mpi* instance) {
 
   //GENERATE RANDOM PERMUTATION OF LENGTH ldA
   int* randPerm = malloc(instance->ldA * sizeof(int));
+  if(randPerm==NULL) {
+    fprintf(stderr,"Error 30 - malloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 30);
+  }
   for(i=0; i < instance->ldA; i++) {
     randNum = rand() % (i+1);
     if(randNum != i)
@@ -331,6 +331,8 @@ extern void calcFolds(ISTAinstance_mpi* instance) {
     value = i % instance->numFolds;
     instance->folds[ randPerm[i] ] = value;
   }
+
+  free(randPerm);
 
 }
 
@@ -395,8 +397,10 @@ extern void multiply_ATx(float* xvalue, float* result, ISTAinstance_mpi* instanc
 {
   int rank;
   float* temp = calloc(instance->rdA+1, sizeof(float));
-  if(temp==NULL)
-    fprintf(stdout,"Unable to allocate memory!");
+  if(temp==NULL) {
+    fprintf(stderr,"Error 31 - calloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 31);
+  }
 
   //Tell slaves we are going to multiply A' * xvalue
   for(rank=1; rank <= instance->nslaves; rank++)
@@ -423,9 +427,10 @@ extern void multiply_ATAx(float* xvalue, float* result, ISTAinstance_mpi* instan
 {
   int rank;
   float* temp = calloc(instance->rdA + 1, sizeof(float));
-  if(temp==NULL)
-    fprintf(stdout,"Unable to allocate memory!");
-
+  if(temp==NULL) {
+    fprintf(stderr,"Error 32 - calloc failure\n");
+    MPI_Abort(MPI_COMM_WORLD, 32);
+  }
 
   //Tell slaves we are going to do A^t*A*xvalue
   for(rank=1; rank <= instance->nslaves; rank++)

@@ -4,30 +4,32 @@ CC=gcc
 CFLAGS=-Wall
 IDFLAGS=-I$(CBLASPATH)/include/
 LDFLAGS=-L$(CBLASPATH)/lib/ -latlas -lcblas -lm
+CRISTASOURCE=src/runCrista.c src/cristaLib.c src/cristaLib.h
+CVSOURCE=src/runCrossValidatedCrista.c src/CVcristaLib.c src/CVcristaLib.h
 
 .PHONY: clean test
 
 all: dataGenerator runCrista runCrossValidatedCrista
 
-dataGenerator: 
+dataGenerator: src/dataGenerator.c
 	$(CC) $(CFLAGS) $(IDFLAGS) $(LDFLAGS) -o dataGenerator src/dataGenerator.c
 
-runCrista: runCrista.o cristaLib.o
+runCrista: src/runCrista.o src/cristaLib.o
 	$(MPICC) $(CFLAGS) $(IDFLAGS) $(LDFLAGS) src/runCrista.o src/cristaLib.o -o runCrista 
 
-runCrossValidatedCrista: runCrossValidatedCrista.o CVcristaLib.o
+runCrossValidatedCrista: src/runCrossValidatedCrista.o src/CVcristaLib.o
 	$(MPICC) $(CFLAGS) $(IDFLAGS) $(LDFLAGS) src/runCrossValidatedCrista.o src/CVcristaLib.o -o runCrossValidatedCrista
 
-runCrista.o:
+src/runCrista.o: $(CRISTASOURCE)
 	$(MPICC) $(CFLAGS) -c src/runCrista.c -o src/runCrista.o
 
-runCrossValidatedCrista.o:
+src/runCrossValidatedCrista.o: $(CVSOURCE)
 	$(MPICC) $(CFLAGS) -c src/runCrossValidatedCrista.c -o src/runCrossValidatedCrista.o
 
-cristaLib.o:
+src/cristaLib.o: $(CRISTASOURCE)
 	$(MPICC) $(CFLAGS) -c src/cristaLib.c -o src/cristaLib.o
 
-CVcristaLib.o:
+src/CVcristaLib.o: $(CVSOURCE)
 	$(MPICC) $(CFLAGS) -c src/CVcristaLib.c -o src/CVcristaLib.o
 
 clean:

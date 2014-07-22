@@ -28,11 +28,12 @@ int main(int argc, char **argv)
   char Afilename[MAX_FILENAME_SIZE];
   char modelType;
 
+  fprintf(stdout, "fetching dataGenerator parameters...\n");
   //GET VALUES FROM PARAMETER FILE
   getParams(argv[1], &numRows, &numSigCols, &numTotalCols, &sigColsOffset,
 	    &intercept, &noiseLevel, solnfilename, bfilename, Afilename, &modelType);
 
-
+  fprintf(stdout, "generating data matrix and observations...\n");
   //GENERATE SIGNIFICANT PART OF A MATRIX
   float* A = (float*)malloc(numRows*numSigCols*sizeof(float));
   if(!A) {
@@ -95,6 +96,7 @@ int main(int argc, char **argv)
       objFunc += log( 1 + exp( calcVector[i] )) - calcVector[i] * b[i];
   }
 
+  fprintf(stdout, "writing data to files...\n");
   //WRITE SOLN VECTOR TO FILE
   FILE* solnFile = fopen(solnfilename, "w");
   if(solnFile==NULL) {

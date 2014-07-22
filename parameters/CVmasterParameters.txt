@@ -1,9 +1,9 @@
 FileNameForX0 : zeros
-FileNameForB : data/LINEAR_100_100_SIG_10_INT_5_NOISE_0_1_b.dat
-OutputFile : results/100_100_10_5_CVresults.txt
-numCols : 100
-numLambdas : 20 (lambda is the weight we put on the regularization function)
-lambdaStart : 1.0 (a negative value here forces automatic calculation)
+FileNameForB : data/LIN_1000_5000_SIG_5_INT_5_NOISE_0_2_b.dat
+OutputFile : results/1000_5000_5_5_CVresults.txt
+numCols : 5000
+numLambdas : 25 (lambda is the weight we put on the regularization function)
+lambdaStart : 2.0 (a negative value here forces automatic calculation)
 lambdaFinish : 0.005
 numFolds : 10
 StepSizeDecretion : 0.9

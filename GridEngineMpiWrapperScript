@@ -6,7 +6,7 @@
 
 #$ -cwd
 #$ -j y
-#$ -pe orte 16
+#$ -pe orte 8
 #$ -R y
 
 module load openmpi-x86_64

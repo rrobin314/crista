@@ -12,7 +12,7 @@ After setting up the Makefile to properly link a CBLAS library, dataGenerator.c 
 
 2. Setting Parameters
 
-The parameters are contained in the file dataGenParameters.txt.
+The parameters are contained in the file parameters/dataGeneratorParams.txt.
 
 FileNameForSoln -> this is where the solution vector will be written.  
 ModelType -> 'l' for linear regression, 'o' for logistic regression.
@@ -27,3 +27,11 @@ intercept -> float determining intercept (see model description above)
 noiseLevel -> float determining how much noise to include (see model description)
 FileNameForB -> this is where the observation vector is written
 FileNameForA -> this is where the data matrix A is written
+
+3. Running
+
+Once the parameter file is set, run the program by executing:
+
+$ ./dataGenerator parameters/dataGeneratorParams.txt
+
+

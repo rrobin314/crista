@@ -1,4 +1,4 @@
-MatrixFileName : data/LOG_100_100_SIG_6_INT_0_NOISE_0_0_A.dat
-numRows : 25
-numCols : 100
+MatrixFileName : data/LIN_5000_10000_SIG_5_INT_5_NOISE_0_0_A.dat
+numRows : 1001
+numCols : 10000
 interceptFlag : 1
