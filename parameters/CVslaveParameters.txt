@@ -1,4 +1,4 @@
-MatrixFileName : Data/LINEAR_100_100_SIG_10_INT_5_NOISE_0_1_A.dat
+MatrixFileName : data/LINEAR_100_100_SIG_10_INT_5_NOISE_0_1_A.dat
 numRows : 25
 numCols : 100
 interceptFlag : 1

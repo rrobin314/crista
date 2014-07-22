@@ -1,6 +1,6 @@
 FileNameForX0 : zeros
-FileNameForB : Data/LINEAR_100_100_SIG_10_INT_5_NOISE_0_1_b.dat
-OutputFile : CVISTAmpiOut.txt
+FileNameForB : data/LINEAR_100_100_SIG_10_INT_5_NOISE_0_1_b.dat
+OutputFile : results/100_100_10_5_CVresults.txt
 numCols : 100
 numLambdas : 20 (lambda is the weight we put on the regularization function)
 lambdaStart : 1.0 (a negative value here forces automatic calculation)

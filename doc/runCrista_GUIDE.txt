@@ -46,7 +46,7 @@ MinimumFuncDelta -> optimization stops if percent change in objective is less th
 
 To submit the code to the SunGridEngine cluster scheduler one needs to use a wrapper script similar to 'GridEngineMpiWrapperScript'.  With this wrapper, submission looks like:
 
-$ qsub GridEngineMpiWrapperScript 5 runCrista masterParameters.txt slaveParameters.txt
+$ qsub GridEngineMpiWrapperScript 5 runCrista parameters/masterParameters.txt parameters/slaveParameters.txt
 
 Remember that the number of slaves is the number of processes minus one.  So the above call would run the code with 4 slaves.
 
