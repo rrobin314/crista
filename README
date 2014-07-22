@@ -7,7 +7,7 @@ OVERVIEW:
 This package contains an implementation of the ISTA and FISTA proximal gradient algorithms for solving L1-penalized linear and logistic regression.  This implementation uses MPI to distribute the workload among several nodes of a cluster.  It also makes use of CBLAS for efficient linear algebra operations.  For background on the ISTA and FISTA algorithms, please see the paper "A Fast Iterative Shrinkage-Thresholding Algorithm for Linear Inverse Problems" by Beck and Teboulle.
 
 INSTALLATION:
-Once the source code has been copied to your machine (using 'git clone' or by donwloading it as a .zip), the Makefile will need to be modified to work with your system.  In particular, the variables linking the CBLAS libraries will need to be changed.  Once this is done, simply run:
+Once the source code has been copied to your machine (using 'git clone' or by downloading it as a .zip), the Makefile will need to be modified to work with your system.  In particular, the variables linking the CBLAS libraries will need to be changed.  Once this is done, simply run:
 
 $ make clean  
 

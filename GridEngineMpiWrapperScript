@@ -1,0 +1,13 @@
+#!/bin/tcsh
+# #1 is the number of processes to run MPI with
+# #2 is the mpi executable file
+# #3 is the master parameters
+# #4 is the slave parameters
+
+#$ -cwd
+#$ -j y
+#$ -pe orte 16
+#$ -R y
+
+module load openmpi-x86_64
+mpirun -np $argv[1] $argv[2] $argv[3] $argv[4]

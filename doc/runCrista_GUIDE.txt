@@ -1,12 +1,17 @@
+runCrista is a program designed to run large instances of L1-penalized logistic and linear regression on MPI enabled clusters.  There are a few features that make this program attractive to users:
+- Solves on a path of regularization weights, starting with a large weight and gradually decreasing to the desired final weight.  This tactic often increases accuracy of the final solution and decreases the number of iterations.
+- Uses the CBLAS library for efficient linear algebra operations.
+- Capable of handling very large, non-sparse problem instances.
+- Reads in and outputs plain text files.  This is a negative for performance, but we hope increases usability.
+- Has a companion program, runCrossValidatedCrista, that runs cross validation to determine the best regularization weight for prediction.
+
 1. Compiling
 
-Modify the script 'COMPILEmpiWITHcblasANDclistaLib' so that the options to mpicc point to the correct cblas libraries on your system.  Then run 
-[]$ ./COMPILEmpiWITHcblasANDclistaLib runClistaSolve
-to compile the program.
+After modifying the Makefile to properly link a CBLAS library, runCrista.c can be compiled by simply running 'make' from the command line.
 
 2. Setting options to runClistaSolve
 
-The options are contained in the text files 'masterParameters.txt' and 'slaveParameters.txt'.  The slave parameters are as follows:
+The options are contained in the text files 'parameters/masterParameters.txt' and 'parameters/slaveParameters.txt'.  The slave parameters are as follows:
 
 MatrixFileName -> string argument pointing to the file containing the 'A' matrix
 numRows -> each slave attempts to read in a matrix with this many rows
@@ -33,14 +38,16 @@ StepSizeDecretion -> How much to decrease the stepsize after a failed backtracki
                      0.9 is standard.
 InitialStep -> Size of initial gradient step.
 RegressionType -> 'l' for linear regression. 'o' for logistic regression.
-FistaAcceleration -> '1' to use FISTA style search point.  '0' to use basic ISTA search point.
+FistaAcceleration -> '1' to use FISTA style accelerated search point.  '0' to use basic ISTA search point.
 MaximumIterations -> maximum number of iterations spent optimizing at a particular lambda.
 MinimumFuncDelta -> optimization stops if percent change in objective is less than this value.
 
 3. Running in MPI
 
-To submit the code to the SunGridEngine cluster scheduler one needs to use a wrapper script similar to 'RUNmpiPROGRAM'.  With this wrapper, submission looks like:
-[]$qsub RUNmpiPROGRAM 5 runCrossValidatedClista CVmasterParameters.txt CVslaveParameters.txt
+To submit the code to the SunGridEngine cluster scheduler one needs to use a wrapper script similar to 'GridEngineMpiWrapperScript'.  With this wrapper, submission looks like:
+
+$ qsub GridEngineMpiWrapperScript 5 runCrista masterParameters.txt slaveParameters.txt
+
 Remember that the number of slaves is the number of processes minus one.  So the above call would run the code with 4 slaves.
 
 4. Output

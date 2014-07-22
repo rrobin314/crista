@@ -8,9 +8,7 @@ where epsilons are iid N(0,1).  In the linear case, this is our 'b' vector.  In 
 
 1. Compiling
 
-The data_generator program requires cblas, so compiling will require linking the appropriate libraries.  Here is an emample:
-
-[]$ gcc -Wall -o data_generator -I /usr/local/atlas-3.9.23/include/ -L /usr/local/atlas-3.9.23/lib/ -latlas -lcblas data_generator.c
+After setting up the Makefile to properly link a CBLAS library, dataGenerator.c can be compiled by simply running 'make' from the command line.
 
 2. Setting Parameters
 
