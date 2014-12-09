@@ -6,6 +6,78 @@ Date: July 21, 2014
 OVERVIEW:
 This package contains an implementation of the ISTA and FISTA proximal gradient algorithms for solving L1-penalized linear and logistic regression.  This implementation uses MPI to distribute the workload among several nodes of a cluster.  It also makes use of CBLAS for efficient linear algebra operations.  For background on the ISTA and FISTA algorithms, please see the paper "A Fast Iterative Shrinkage-Thresholding Algorithm for Linear Inverse Problems" by Beck and Teboulle.
 
+##################################
+Part I - Running Using Starcluster
+##################################
+
+We have created an Amazon Machine Image (AMI) using the Starcluster software (http://star.mit.edu/cluster/docs/latest/index.html).  
+With this image and Starcluster, one can easily create a cluster on Amazon Web Services with the CRISTA software ready to go.
+The CRISTA AMI has the following id:
+
+ami-1f0d432f
+
+Once the cluster is up and running, the crista directory can be found at /home/crista
+The next sections detail how to run crista on a cluster generated with this AMI
+
+DATA FILES:
+Before running Crista, one needs a data matrix and an observation vector to run the linear inverse problem on.
+Both the matrix and the vector need to be stored in their own text file.  The matrix entries are assumed to be 
+stored in row-order, i.e. the entries for the first row are written in the text file, then the second row, and so
+on.  Each row must be separated by a newline.  Individual entries may be separated by whitespace and/or commas.
+For example, this would be an acceptable text file for the 3x3 identity:
+
+1, 0, 0,
+0  1  0
+0 0 1
+
+There is an included program "data_generator" in the package to generate sample instances of data matrices
+and observation vectors in a compatible format.  See the doc/ folder for more information on using that program.
+
+SETTING PARAMETERS:
+With appropriate data files in hand, the next step is to create parameter files for the program.  Sample parameter files
+can be found in the parameters/ folder.  Note that the cross validation routine requires slightly different parameters than
+the standard routine and has its own parameter text files.
+
+Before running crista, a few parameters must be changed.  In the masterParameters file, we must change
+FileNameForB: - /path/to/observation/vector
+OutputFile: - /path/to/desired/output/file
+numCols: - integer corresponding to number of columns in our data matrix
+
+In the slaveParameters file, we must change
+MatrixFileName: - /path/to/data/matrix
+numCols: - same integer as above
+numRows: - integer indicating how many rows each slave should hold in its piece of the data matrix
+
+Let's explain the numRows parameter with an example.  Suppose I have a 1000x1000 data matrix and an 8 node cluster.
+Since one node is reserved for the 'master' role, that leaves 7 'slave' nodes.  If I let numRows = 100, each slave
+will store a 100x1000 piece of the data matrix and, in total, we will be using a 700x1000 piece of the data matrix
+in our inverse problem.  Instead, if I let numRows = 150, then each slave will store a 150x1000 matrix.  The first six
+slaves' matrices will be full, and the last slave will store rows 901-1000 of the data matrix plus 50 zero rows.
+When we run the problem, these 50 zeros rows will not affect the calculations and we will be making use of the 
+full data matrix.  
+
+Please see the doc/ folder for a full explanation of the parameters available.
+
+RUNNING:
+Once we have set up the parameter files, we can run by typing in:
+
+mpirun -np #NUM_NODES_TO_USE runCrista /path/to/master/parameters /path/to/slave/parameters
+
+Note that since we are running our own cluster, we do not need to use any sort of job scheduler.  
+The vector resulting from the computation will be written in the OutputFile specified in the parameters.
+
+The cross validation routine is run similarly, we just have to use the corresponding paramter files (these
+contain a parameter for the number of folds to use in the cross validation routine).
+
+mpirun -np #NUM_NODES_TO_USE runCrossValidatedCrista
+
+
+
+
+########################################
+PART II - Installing and Running Locally
+########################################
+
 INSTALLATION:
 Once the source code has been copied to your machine (using 'git clone' or by downloading it as a .zip), the Makefile will need to be modified to work with your system.  In particular, the variables linking the CBLAS libraries will need to be changed.  Once this is done, simply run:
 
