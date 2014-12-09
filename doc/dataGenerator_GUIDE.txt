@@ -1,8 +1,12 @@
-This program generates toy data for the runClistaSolve and runCrossValidatedClista programs.  We construct the 'A' matrix whose entries are iid N(0,1).  Then we construct the solution vector with 'numSigCols' nonzero entries that are distributed iid N(0,1) in the linear case and iid 3*N(0,1) in the logistic case.  Then we calculate 
+This program generates toy data for the runClistaSolve and runCrossValidatedClista programs.  
+We construct the 'A' matrix whose entries are iid N(0,1).  Then we construct the solution vector 
+with 'numSigCols' nonzero entries that are distributed iid N(0,1) in the linear case and iid 3*N(0,1) 
+in the logistic case.  Then we calculate 
 
 A*soln + intercept + noiseLevel*epsilon 
 
-where epsilons are iid N(0,1).  In the linear case, this is our 'b' vector.  In the logistic case, we interpret this as logodds and generate the 'b' vector based on these odds.
+where epsilons are iid N(0,1).  In the linear case, this is our 'b' vector.  In the logistic 
+case, we interpret this as logodds and generate the 'b' vector based on these odds.
 
 
 
